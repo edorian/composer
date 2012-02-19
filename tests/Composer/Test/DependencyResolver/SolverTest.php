@@ -488,7 +488,7 @@ class SolverTest extends TestCase
     public function testConflictResultEmpty()
     {
         $this->repo->addPackage($packageA = $this->getPackage('A', '1.0'));
-        $this->repo->addPackage($packageB = $this->getPackage('B', '1.0'));;
+        $this->repo->addPackage($packageB = $this->getPackage('B', '1.0'));
 
         $packageA->setConflicts(array(
             new Link('A', 'B', new VersionConstraint('>=', '1.0'), 'conflicts'),
@@ -514,6 +514,36 @@ class SolverTest extends TestCase
 
         $packageA->setRequires(array(
             new Link('A', 'B', new VersionConstraint('>=', '2.0'), 'requires'),
+        ));
+
+        $this->reposComplete();
+
+        $this->request->install('A');
+
+        try {
+            $transaction = $this->solver->solve($this->request);
+            $this->fail('Unsolvable conflict did not resolve in exception.');
+        } catch (SolverProblemsException $e) {
+            // @todo: assert problem properties
+        }
+    }
+
+    public function testComplexConflictResultEmpty()
+    {
+        $this->repo->addPackage($packageA = $this->getPackage('A', '1.0'));
+        $this->repo->addPackage($packageB = $this->getPackage('B', '1.0'));
+        $this->repo->addPackage($packageC = $this->getPackage('C', '1.0'));
+
+        $packageA->setRequires(array(
+            new Link('A', 'B', new VersionConstraint('>=', '1.0'), 'requires'),
+        ));
+
+        $packageB->setRequires(array(
+            new Link('B', 'C', new VersionConstraint('>=', '1.0'), 'requires'),
+        ));
+
+        $packageA->setConflicts(array(
+            new Link('A', 'C', new VersionConstraint('>=', '1.0'), 'conflicts'),
         ));
 
         $this->reposComplete();
